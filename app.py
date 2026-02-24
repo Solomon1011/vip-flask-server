@@ -1,183 +1,263 @@
-
-from flask import Flask, render_template, request, redirect, session
-import os, json, requests
+from flask import Flask, request, redirect, session
+import requests
+import json
+import os
 from datetime import datetime, timedelta
-import threading, time
 
-# ---------------------------
-# APP SETUP
-# ---------------------------
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# Load environment variables
-PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHANNEL = os.getenv("TELEGRAM_CHANNEL")
+PAYSTACK_SECRET_KEY = "YOUR_PAYSTACK_SECRET_KEY"
 
-# Users database file
 USERS_FILE = "users.json"
 
-# ---------------------------
-# UTILITY FUNCTIONS
-# ---------------------------
+
+# -------------------------
+# Helper Functions
+# -------------------------
+
 def load_users():
     if not os.path.exists(USERS_FILE):
         with open(USERS_FILE, "w") as f:
-            json.dump({"users":[]}, f)
-    with open(USERS_FILE) as f:
+            json.dump({"users": []}, f)
+    with open(USERS_FILE, "r") as f:
         return json.load(f)
+
 
 def save_users(data):
     with open(USERS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-# Post message to Telegram
-def post_to_telegram(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": TELEGRAM_CHANNEL, "text": message}
-    requests.post(url, json=payload)
 
-# ---------------------------
-# HOME PAGE
-# ---------------------------
+# -------------------------
+# Homepage
+# -------------------------
+
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return """
+    <h1>🔥 SOLO PREDICTION APP 🔥</h1>
+    <br>
+    <a href='/free'>Free Tips</a><br><br>
+    <a href='/vip'>VIP Match</a><br><br>
+    <a href='https://wa.me/2349018025267'>WhatsApp</a><br><br>
+    <a href='https://t.me/YOUR_TELEGRAM_LINK'>Telegram</a><br><br>
+    """
 
-# ---------------------------
-# FREE PREDICTIONS
-# ---------------------------
+
+# -------------------------
+# Free Tips
+# -------------------------
+
 @app.route("/free")
 def free():
-    match = "Arsenal vs Chelsea - 1:1"
-    return f"<h2>🔥 Free Prediction</h2><p>{match}</p>"
+    return """
+    <h2>Free Tips</h2>
+    <p>Barcelona vs Sevilla - Over 2.5</p>
+    <a href='/'>Back Home</a>
+    """
 
-# ---------------------------
-# LOGIN
-# ---------------------------
-@app.route("/login", methods=["GET","POST"])
+
+# -------------------------
+# Register
+# -------------------------
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        email = request.form["email"]
+        password = request.form["password"]
+
+        data = load_users()
+
+        for user in data["users"]:
+            if user["email"] == email:
+                return "Email already registered"
+
+        data["users"].append({
+            "email": email,
+            "password": password,
+            "vip": False,
+            "expiry": ""
+        })
+
+        save_users(data)
+        session["user"] = email
+        return redirect("/subscribe-plan")
+
+    return """
+    <h2>Create Account</h2>
+    <form method='POST'>
+        <input type='email' name='email' placeholder='Enter Gmail' required><br><br>
+        <input type='password' name='password' placeholder='Create Password' required><br><br>
+        <button type='submit'>Sign Up</button>
+    </form>
+    """
+
+
+# -------------------------
+# Login
+# -------------------------
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        email = request.form["email"]
         password = request.form["password"]
-        data = load_users()
-        for user in data["users"]:
-            if user["username"] == username and user["password"] == password:
-                # Check VIP expiry
-                if user.get("vip") and datetime.strptime(user.get("expiry","2000-01-01"), "%Y-%m-%d") > datetime.now():
-                    session["user"] = username
-                    return redirect("/vip")
-                else:
-                    return "VIP expired. Please renew subscription."
-        return "Invalid username or password"
-    return '''
-    <h2>VIP Login</h2>
-    <form method="POST">
-        <input name="username" placeholder="Username"><br><br>
-        <input name="password" type="password" placeholder="Password"><br><br>
-        <button type="submit">Login</button>
-    </form>
-    '''
 
-# ---------------------------
-# VIP PAGE
-# ---------------------------
+        data = load_users()
+
+        for user in data["users"]:
+            if user["email"] == email and user["password"] == password:
+                session["user"] = email
+                return redirect("/vip")
+
+        return "Invalid login"
+
+    return """
+    <h2>Login</h2>
+    <form method='POST'>
+        <input type='email' name='email' placeholder='Enter Gmail' required><br><br>
+        <input type='password' name='password' placeholder='Password' required><br><br>
+        <button type='submit'>Login</button>
+    </form>
+    """
+
+
+# -------------------------
+# VIP Page
+# -------------------------
+
 @app.route("/vip")
 def vip():
     if "user" not in session:
         return redirect("/login")
-    match = "VIP: Arsenal vs Chelsea - 2:0"
-    # Post daily prediction to Telegram
-    post_to_telegram(f"Daily VIP Prediction:\n{match}")
-    return f"<h2>👑 VIP Prediction</h2><p>{match}</p>"
 
-# ---------------------------
-# SUBSCRIBE / PAYMENT ROUTE
-@app.route("/subscribe/<username>/<plan>")
-def subscribe(username, plan):
+    email = session["user"]
+    data = load_users()
+
+    for user in data["users"]:
+        if user["email"] == email:
+            if user["vip"] and datetime.strptime(user["expiry"], "%Y-%m-%d") > datetime.now():
+                return """
+                <h2>👑 VIP Predictions</h2>
+                <p>Arsenal vs Chelsea - 2:0</p>
+                <a href='/'>Back Home</a>
+                """
+            else:
+                return redirect("/subscribe-plan")
+
+    return redirect("/register")
+
+
+# -------------------------
+# Subscription Plans
+# -------------------------
+
+@app.route("/subscribe-plan")
+def subscribe_plan():
+    if "user" not in session:
+        return redirect("/register")
+
+    return """
+    <h2>Select VIP Plan</h2>
+    <a href='/subscribe/weekly'>Weekly - $7.55</a><br><br>
+    <a href='/subscribe/monthly'>Monthly - $27.55</a>
+    """
+
+
+# -------------------------
+# Paystack Payment
+# -------------------------
+
+@app.route("/subscribe/<plan>")
+def subscribe(plan):
+    if "user" not in session:
+        return redirect("/register")
+
+    email = session["user"]
+
     url = "https://api.paystack.co/transaction/initialize"
     headers = {
         "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
         "Content-Type": "application/json"
     }
 
-    # USD prices
-    weekly_usd = 7.55
-    monthly_usd = 27.55
-
-    # Exchange rate (adjust if needed)
-    usd_to_ngn = 1000  
+    usd_to_ngn = 1000
 
     if plan == "weekly":
-        amount = int(weekly_usd * usd_to_ngn * 100)  # convert to kobo
+        amount = int(7.55 * usd_to_ngn * 100)
         days = 7
     elif plan == "monthly":
-        amount = int(monthly_usd * usd_to_ngn * 100)
+        amount = int(27.55 * usd_to_ngn * 100)
         days = 30
     else:
         return "Invalid plan"
 
     data = {
-        "email": f"{username}@gmail.com",
+        "email": email,
         "amount": amount,
+        "callback_url": "https://your-app-url.onrender.com/verify",
         "metadata": {
-            "username": username,
+            "email": email,
             "days": days
         }
     }
 
     response = requests.post(url, json=data, headers=headers).json()
-    return redirect(response["data"]["authorization_url"])
 
-# ---------------------------
-# PAYSTACK WEBHOOK
-# ---------------------------
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    event = request.json
-    if event.get("event")=="charge.success":
-        username = event["data"]["metadata"]["username"]
-        days = int(event["data"]["metadata"]["days"])
+    if response.get("status"):
+        return redirect(response["data"]["authorization_url"])
+    else:
+        return "Payment initialization failed"
+
+
+# -------------------------
+# Verify Payment
+# -------------------------
+
+@app.route("/verify")
+def verify():
+    reference = request.args.get("reference")
+
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    headers = {
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
+    }
+
+    response = requests.get(url, headers=headers).json()
+
+    if response["data"]["status"] == "success":
+        email = response["data"]["metadata"]["email"]
+        days = response["data"]["metadata"]["days"]
+
         data = load_users()
-        found = False
+
         for user in data["users"]:
-            if user["username"]==username:
-                user["vip"]=True
-                current_expiry = datetime.strptime(user.get("expiry","2000-01-01"), "%Y-%m-%d")
-                if current_expiry>datetime.now():
-                    new_expiry = current_expiry + timedelta(days=days)
-                else:
-                    new_expiry = datetime.now() + timedelta(days=days)
-                user["expiry"] = new_expiry.strftime("%Y-%m-%d")
-                found=True
-        if not found:
-            data["users"].append({"username": username, "password":"default123", "vip":True, "expiry": (datetime.now()+timedelta(days=days)).strftime("%Y-%m-%d")})
+            if user["email"] == email:
+                user["vip"] = True
+                user["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
+
         save_users(data)
-    return "",200
 
-# ---------------------------
-# ADMIN DASHBOARD
-# ---------------------------
-@app.route("/admin")
-def admin():
-    data = load_users()
-    html = "<h2>All Users</h2><table border=1 cellpadding=8><tr><th>Username</th><th>VIP</th><th>Expiry</th></tr>"
-    for user in data["users"]:
-        html += f"<tr><td>{user['username']}</td><td>{user.get('vip')}</td><td>{user.get('expiry')}</td></tr>"
-    html += "</table>"
-    return html
+        return redirect("/vip")
 
-# ---------------------------
-# LOGOUT
-# ---------------------------
+    return "Payment verification failed"
+
+
+# -------------------------
+# Logout
+# -------------------------
+
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect("/")
 
-# ---------------------------
-# RUN SERVER
-# ---------------------------
-if __name__=="__main__":
-    app.run(host="0.0.0.0", port=10000)
+
+# -------------------------
+# Run App
+# -------------------------
+
+if __name__ == "__main__":
+    app.run(debug=True)
