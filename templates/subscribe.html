@@ -3,18 +3,31 @@
 <head>
 <title>Subscribe VIP</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
 
-<h2>VIP Access 🔒</h2>
+<h2>VIP ACCESS 🔒</h2>
 
-<p>You must subscribe to access VIP matches.</p>
-
-<a href="/subscribe/weekly">Weekly - ₦755</a>
-
-<a href="/subscribe/monthly">Monthly - ₦2755</a>
+<button onclick="payWithPaystack(75500)">Weekly - ₦755</button>
+<button onclick="payWithPaystack(275500)">Monthly - ₦2755</button>
 
 <a href="/">Back Home</a>
+
+<script>
+function payWithPaystack(amount){
+    let handler = PaystackPop.setup({
+        key: "{{ public_key }}",
+        email: "customer@email.com",
+        amount: amount,
+        currency: "NGN",
+        callback: function(response){
+            window.location.href = "/verify/" + response.reference;
+        }
+    });
+    handler.openIframe();
+}
+</script>
 
 </body>
 </html>
