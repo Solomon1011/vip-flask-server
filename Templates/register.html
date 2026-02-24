@@ -1,19 +1,12 @@
 <!DOCTYPE html>
 <html>
-<head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
+<head><title>Register</title></head>
 <body>
-
-<div class="header">Create Account</div>
-
-<div class="container">
+<h2>Register</h2>
 <form method="POST">
-<input type="email" name="email" placeholder="Enter Gmail" required>
-<input type="password" name="password" placeholder="Create Password" required>
-<button type="submit">Sign Up</button>
+<input type="email" name="email" placeholder="Your Gmail" required>
+<button type="submit">Register</button>
 </form>
-</div>
-
+<a href="/login">Already registered? Login</a>
 </body>
 </html>
