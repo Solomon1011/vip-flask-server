@@ -1,23 +1,43 @@
-a, button {
-    display: block; /* makes them full width inside card style */
-    width: 300px; /* same size for all buttons */
-    margin: 20px auto; /* center them */
-    padding: 20px 0; /* taller buttons */
-    background: #ffd700;
-    color: black;
-    font-weight: 900; /* extra bold */
-    font-size: 22px; /* bigger text */
-    border-radius: 12px;
-    text-decoration: none;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+body {
+    background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+    color: #ffffff;
+    font-family: 'Arial Black', Arial, sans-serif;
     text-align: center;
+    padding: 40px;
 }
 
-a:hover, button:hover {
-    background: white;
+h1 {
+    color: gold;
+    font-weight: 900;
+    font-size: 60px;
+    text-shadow: 3px 3px 12px black;
+    margin-bottom: 50px;
+}
+
+/* Card style for homepage buttons */
+.card {
+    background: linear-gradient(135deg, #1c1c1c, #2a2a2a);
+    border: 2px solid gold;
+    border-radius: 18px;
+    width: 320px;
+    margin: 20px auto;
+    padding: 25px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+}
+
+.card a {
+    display: block;
+    font-weight: 900;
+    font-size: 22px;
+    text-decoration: none;
+    color: gold;
+    padding: 15px 0;
+    transition: 0.3s;
+}
+
+.card a:hover {
     color: black;
+    background: gold;
+    border-radius: 10px;
     transform: scale(1.05);
 }
