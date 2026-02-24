@@ -1,59 +1,23 @@
-/* General body */
-body {
-    background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
-    color: #ffffff;
-    font-family: 'Arial Black', Arial, sans-serif;
-    text-align: center;
-    padding: 40px;
-}
-
-/* Homepage title */
-h1 {
-    color: gold;
-    font-weight: 900; /* extra bold */
-    font-size: 60px;  /* bigger for impact */
-    text-shadow: 3px 3px 12px black;
-}
-
-/* Headings on pages */
-h2 {
-    color: #ffd700;
-    font-weight: 900;
-    font-size: 42px;
-    text-shadow: 2px 2px 8px black;
-}
-
-/* Buttons and links on home */
 a, button {
-    display: inline-block;
-    margin: 15px;
-    padding: 18px 30px;
+    display: block; /* makes them full width inside card style */
+    width: 300px; /* same size for all buttons */
+    margin: 20px auto; /* center them */
+    padding: 20px 0; /* taller buttons */
     background: #ffd700;
     color: black;
-    font-weight: 900; /* very bold */
-    font-size: 20px;
+    font-weight: 900; /* extra bold */
+    font-size: 22px; /* bigger text */
     border-radius: 12px;
     text-decoration: none;
     border: none;
     cursor: pointer;
     transition: 0.3s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.7);
+    text-align: center;
 }
 
 a:hover, button:hover {
     background: white;
     color: black;
     transform: scale(1.05);
-}
-
-/* Professional card style for Free Tips and VIP pages */
-.card {
-    background: linear-gradient(135deg, #1c1c1c, #2a2a2a);
-    border: 2px solid gold;
-    border-radius: 18px;
-    padding: 25px;
-    margin: 20px auto;
-    width: 85%;
-    max-width: 650px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.8);
 }
