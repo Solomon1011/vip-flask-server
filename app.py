@@ -94,20 +94,39 @@ def vip():
 
 # ---------------------------
 # SUBSCRIBE / PAYMENT ROUTE
-# ---------------------------
 @app.route("/subscribe/<username>/<plan>")
 def subscribe(username, plan):
     url = "https://api.paystack.co/transaction/initialize"
-    headers = {"Authorization": f"Bearer {PAYSTACK_SECRET_KEY}", "Content-Type": "application/json"}
-    if plan=="weekly":
-        amount = 75500
+    headers = {
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # USD prices
+    weekly_usd = 7.55
+    monthly_usd = 27.55
+
+    # Exchange rate (adjust if needed)
+    usd_to_ngn = 1000  
+
+    if plan == "weekly":
+        amount = int(weekly_usd * usd_to_ngn * 100)  # convert to kobo
         days = 7
-    elif plan=="monthly":
-        amount = 275500
+    elif plan == "monthly":
+        amount = int(monthly_usd * usd_to_ngn * 100)
         days = 30
     else:
         return "Invalid plan"
-    data = {"email": f"{username}@gmail.com", "amount": amount, "metadata": {"username": username,"days":days}}
+
+    data = {
+        "email": f"{username}@gmail.com",
+        "amount": amount,
+        "metadata": {
+            "username": username,
+            "days": days
+        }
+    }
+
     response = requests.post(url, json=data, headers=headers).json()
     return redirect(response["data"]["authorization_url"])
 
