@@ -1,219 +1,130 @@
+import os
+import json
 from flask import Flask, render_template, request, redirect, session, url_for
 import requests
-import json
-import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-PAYSTACK_SECRET_KEY = "YOUR_PAYSTACK_SECRET_KEY"
-BASE_URL = "https://your-render-url.onrender.com"
+# Paystack and Telegram environment
+PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY")  # Set in Render env
+TELEGRAM_CHANNEL = "@daily_correct_score1"
 
 USERS_FILE = "users.json"
 
-
-# -----------------------
-# Helper Functions
-# -----------------------
+# Load or create users file
+if not os.path.exists(USERS_FILE):
+    with open(USERS_FILE, "w") as f:
+        json.dump({"users": []}, f)
 
 def load_users():
-    if not os.path.exists(USERS_FILE):
-        with open(USERS_FILE, "w") as f:
-            json.dump({"users": []}, f)
     with open(USERS_FILE, "r") as f:
         return json.load(f)
 
-
 def save_users(data):
     with open(USERS_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f)
 
+# Free tip (static for demo)
+free_tip = "Manchester United vs Chelsea: 2-1"
 
-# -----------------------
+# ----------------------------------------
 # Routes
-# -----------------------
+# ----------------------------------------
 
 @app.route("/")
 def home():
     return render_template("home.html")
 
-
-@app.route("/free")
-def free():
-    return render_template("free.html")
-
-
-# -----------------------
-# Register
-# -----------------------
-
+# Register user with Gmail
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-
-        data = load_users()
-
-        for user in data["users"]:
-            if user["email"] == email:
+        email = request.form.get("email")
+        users = load_users()
+        for u in users["users"]:
+            if u["email"] == email:
                 return "Email already registered"
-
-        data["users"].append({
-            "email": email,
-            "password": password,
-            "vip": False,
-            "expiry": ""
-        })
-
-        save_users(data)
+        users["users"].append({"email": email, "vip_until": None})
+        save_users(users)
         session["user"] = email
-        return redirect("/subscribe-plan")
-
+        return redirect(url_for("home"))
     return render_template("register.html")
 
-
-# -----------------------
-# Login
-# -----------------------
-
+# Login (simple)
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-
-        data = load_users()
-
-        for user in data["users"]:
-            if user["email"] == email and user["password"] == password:
+        email = request.form.get("email")
+        users = load_users()
+        for u in users["users"]:
+            if u["email"] == email:
                 session["user"] = email
-                return redirect("/vip")
-
-        return "Invalid login"
-
+                return redirect(url_for("home"))
+        return "Email not found. Please register."
     return render_template("login.html")
 
+# Free Tips
+@app.route("/free")
+def free():
+    return render_template("free.html", tip=free_tip)
 
-# -----------------------
-# VIP Page
-# -----------------------
-
+# VIP Match
 @app.route("/vip")
 def vip():
     if "user" not in session:
-        return redirect("/login")
-
-    email = session["user"]
-    data = load_users()
-
-    for user in data["users"]:
-        if user["email"] == email:
-            if user["vip"] and datetime.strptime(user["expiry"], "%Y-%m-%d") > datetime.now():
-                return render_template("vip.html")
+        return redirect(url_for("login"))
+    users = load_users()
+    for u in users["users"]:
+        if u["email"] == session["user"]:
+            if u["vip_until"] and datetime.utcnow() < datetime.fromisoformat(u["vip_until"]):
+                return render_template("vip.html", vip_match="Manchester United vs Chelsea: 2-1")
             else:
-                return redirect("/subscribe-plan")
+                return redirect(url_for("subscribe_plan"))
+    return redirect(url_for("register"))
 
-    return redirect("/register")
-
-
-# -----------------------
-# Subscription Page
-# -----------------------
-
+# Subscription Plan page
 @app.route("/subscribe-plan")
 def subscribe_plan():
     if "user" not in session:
-        return redirect("/register")
-
+        return redirect(url_for("login"))
     return render_template("subscribe.html")
 
-
-# -----------------------
-# Paystack Payment
-# -----------------------
-
+# Paystack payment route
 @app.route("/subscribe/<plan>")
 def subscribe(plan):
     if "user" not in session:
-        return redirect("/register")
-
-    email = session["user"]
-
+        return redirect(url_for("login"))
     url = "https://api.paystack.co/transaction/initialize"
-    headers = {
-        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    usd_to_ngn = 1000
-
-    if plan == "weekly":
-        amount = int(7.55 * usd_to_ngn * 100)
+    headers = {"Authorization": f"Bearer {PAYSTACK_SECRET_KEY}", "Content-Type": "application/json"}
+    amount = 0
+    days = 0
+    if plan=="weekly":
+        amount = 75500  # NGN 755 (Paystack uses kobo)
         days = 7
-    elif plan == "monthly":
-        amount = int(27.55 * usd_to_ngn * 100)
+    elif plan=="monthly":
+        amount = 275500
         days = 30
     else:
         return "Invalid plan"
-
-    data = {
-        "email": email,
-        "amount": amount,
-        "callback_url": f"{BASE_URL}/verify",
-        "metadata": {
-            "email": email,
-            "days": days
-        }
-    }
-
+    data = {"email": session["user"], "amount": amount, "metadata": {"days":days}}
     response = requests.post(url, json=data, headers=headers).json()
+    return redirect(response["data"]["authorization_url"])
 
-    if response.get("status"):
-        return redirect(response["data"]["authorization_url"])
-    else:
-        return "Payment failed"
-
-
-# -----------------------
-# Verify Payment
-# -----------------------
-
-@app.route("/verify")
-def verify():
-    reference = request.args.get("reference")
-
-    url = f"https://api.paystack.co/transaction/verify/{reference}"
-    headers = {
-        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"
-    }
-
-    response = requests.get(url, headers=headers).json()
-
-    if response["data"]["status"] == "success":
-        email = response["data"]["metadata"]["email"]
-        days = response["data"]["metadata"]["days"]
-
-        data = load_users()
-
-        for user in data["users"]:
-            if user["email"] == email:
-                user["vip"] = True
-                user["expiry"] = (datetime.now() + timedelta(days=days)).strftime("%Y-%m-%d")
-
-        save_users(data)
-
-        return redirect("/vip")
-
-    return "Verification failed"
-
-
-@app.route("/logout")
-def logout():
-    session.pop("user", None)
-    return redirect("/")
-
+# Webhook for Paystack (set webhook URL on Paystack dashboard)
+@app.route("/paystack/webhook", methods=["POST"])
+def paystack_webhook():
+    event = request.json
+    if event["event"] == "charge.success":
+        email = event["data"]["customer"]["email"]
+        days = event["data"]["metadata"]["days"]
+        users = load_users()
+        for u in users["users"]:
+            if u["email"] == email:
+                u["vip_until"] = (datetime.utcnow() + timedelta(days=days)).isoformat()
+        save_users(users)
+    return "", 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
