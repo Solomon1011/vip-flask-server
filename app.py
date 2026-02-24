@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 import requests
 import json
 import os
@@ -8,13 +8,14 @@ app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
 PAYSTACK_SECRET_KEY = "YOUR_PAYSTACK_SECRET_KEY"
+BASE_URL = "https://your-render-url.onrender.com"
 
 USERS_FILE = "users.json"
 
 
-# -------------------------
+# -----------------------
 # Helper Functions
-# -------------------------
+# -----------------------
 
 def load_users():
     if not os.path.exists(USERS_FILE):
@@ -29,38 +30,23 @@ def save_users(data):
         json.dump(data, f, indent=4)
 
 
-# -------------------------
-# Homepage
-# -------------------------
+# -----------------------
+# Routes
+# -----------------------
 
 @app.route("/")
 def home():
-    return """
-    <h1>🔥 SOLO PREDICTION APP 🔥</h1>
-    <br>
-    <a href='/free'>Free Tips</a><br><br>
-    <a href='/vip'>VIP Match</a><br><br>
-    <a href='https://wa.me/2349018025267'>WhatsApp</a><br><br>
-    <a href='https://t.me/YOUR_TELEGRAM_LINK'>Telegram</a><br><br>
-    """
+    return render_template("home.html")
 
-
-# -------------------------
-# Free Tips
-# -------------------------
 
 @app.route("/free")
 def free():
-    return """
-    <h2>Free Tips</h2>
-    <p>Barcelona vs Sevilla - Over 2.5</p>
-    <a href='/'>Back Home</a>
-    """
+    return render_template("free.html")
 
 
-# -------------------------
+# -----------------------
 # Register
-# -------------------------
+# -----------------------
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -85,19 +71,12 @@ def register():
         session["user"] = email
         return redirect("/subscribe-plan")
 
-    return """
-    <h2>Create Account</h2>
-    <form method='POST'>
-        <input type='email' name='email' placeholder='Enter Gmail' required><br><br>
-        <input type='password' name='password' placeholder='Create Password' required><br><br>
-        <button type='submit'>Sign Up</button>
-    </form>
-    """
+    return render_template("register.html")
 
 
-# -------------------------
+# -----------------------
 # Login
-# -------------------------
+# -----------------------
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -114,19 +93,12 @@ def login():
 
         return "Invalid login"
 
-    return """
-    <h2>Login</h2>
-    <form method='POST'>
-        <input type='email' name='email' placeholder='Enter Gmail' required><br><br>
-        <input type='password' name='password' placeholder='Password' required><br><br>
-        <button type='submit'>Login</button>
-    </form>
-    """
+    return render_template("login.html")
 
 
-# -------------------------
+# -----------------------
 # VIP Page
-# -------------------------
+# -----------------------
 
 @app.route("/vip")
 def vip():
@@ -139,36 +111,28 @@ def vip():
     for user in data["users"]:
         if user["email"] == email:
             if user["vip"] and datetime.strptime(user["expiry"], "%Y-%m-%d") > datetime.now():
-                return """
-                <h2>👑 VIP Predictions</h2>
-                <p>Arsenal vs Chelsea - 2:0</p>
-                <a href='/'>Back Home</a>
-                """
+                return render_template("vip.html")
             else:
                 return redirect("/subscribe-plan")
 
     return redirect("/register")
 
 
-# -------------------------
-# Subscription Plans
-# -------------------------
+# -----------------------
+# Subscription Page
+# -----------------------
 
 @app.route("/subscribe-plan")
 def subscribe_plan():
     if "user" not in session:
         return redirect("/register")
 
-    return """
-    <h2>Select VIP Plan</h2>
-    <a href='/subscribe/weekly'>Weekly - $7.55</a><br><br>
-    <a href='/subscribe/monthly'>Monthly - $27.55</a>
-    """
+    return render_template("subscribe.html")
 
 
-# -------------------------
+# -----------------------
 # Paystack Payment
-# -------------------------
+# -----------------------
 
 @app.route("/subscribe/<plan>")
 def subscribe(plan):
@@ -197,7 +161,7 @@ def subscribe(plan):
     data = {
         "email": email,
         "amount": amount,
-        "callback_url": "https://your-app-url.onrender.com/verify",
+        "callback_url": f"{BASE_URL}/verify",
         "metadata": {
             "email": email,
             "days": days
@@ -209,12 +173,12 @@ def subscribe(plan):
     if response.get("status"):
         return redirect(response["data"]["authorization_url"])
     else:
-        return "Payment initialization failed"
+        return "Payment failed"
 
 
-# -------------------------
+# -----------------------
 # Verify Payment
-# -------------------------
+# -----------------------
 
 @app.route("/verify")
 def verify():
@@ -242,22 +206,14 @@ def verify():
 
         return redirect("/vip")
 
-    return "Payment verification failed"
+    return "Verification failed"
 
-
-# -------------------------
-# Logout
-# -------------------------
 
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect("/")
 
-
-# -------------------------
-# Run App
-# -------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
