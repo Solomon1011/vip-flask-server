@@ -2,17 +2,25 @@
 from flask import Flask, render_template, request, redirect, session
 import os, json, requests
 from datetime import datetime, timedelta
+import threading, time
 
+# ---------------------------
 # APP SETUP
+# ---------------------------
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
-# Load Paystack secret key
+# Load environment variables
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHANNEL = os.getenv("TELEGRAM_CHANNEL")
 
-# Users database
+# Users database file
 USERS_FILE = "users.json"
 
+# ---------------------------
+# UTILITY FUNCTIONS
+# ---------------------------
 def load_users():
     if not os.path.exists(USERS_FILE):
         with open(USERS_FILE, "w") as f:
@@ -24,18 +32,30 @@ def save_users(data):
     with open(USERS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
+# Post message to Telegram
+def post_to_telegram(message):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": TELEGRAM_CHANNEL, "text": message}
+    requests.post(url, json=payload)
+
+# ---------------------------
 # HOME PAGE
+# ---------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
+# ---------------------------
 # FREE PREDICTIONS
+# ---------------------------
 @app.route("/free")
 def free():
     match = "Arsenal vs Chelsea - 1:1"
     return f"<h2>🔥 Free Prediction</h2><p>{match}</p>"
 
+# ---------------------------
 # LOGIN
+# ---------------------------
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -44,6 +64,7 @@ def login():
         data = load_users()
         for user in data["users"]:
             if user["username"] == username and user["password"] == password:
+                # Check VIP expiry
                 if user.get("vip") and datetime.strptime(user.get("expiry","2000-01-01"), "%Y-%m-%d") > datetime.now():
                     session["user"] = username
                     return redirect("/vip")
@@ -59,15 +80,21 @@ def login():
     </form>
     '''
 
+# ---------------------------
 # VIP PAGE
+# ---------------------------
 @app.route("/vip")
 def vip():
     if "user" not in session:
         return redirect("/login")
     match = "VIP: Arsenal vs Chelsea - 2:0"
+    # Post daily prediction to Telegram
+    post_to_telegram(f"Daily VIP Prediction:\n{match}")
     return f"<h2>👑 VIP Prediction</h2><p>{match}</p>"
 
+# ---------------------------
 # SUBSCRIBE / PAYMENT ROUTE
+# ---------------------------
 @app.route("/subscribe/<username>/<plan>")
 def subscribe(username, plan):
     url = "https://api.paystack.co/transaction/initialize"
@@ -84,7 +111,9 @@ def subscribe(username, plan):
     response = requests.post(url, json=data, headers=headers).json()
     return redirect(response["data"]["authorization_url"])
 
+# ---------------------------
 # PAYSTACK WEBHOOK
+# ---------------------------
 @app.route("/webhook", methods=["POST"])
 def webhook():
     event = request.json
@@ -108,7 +137,9 @@ def webhook():
         save_users(data)
     return "",200
 
+# ---------------------------
 # ADMIN DASHBOARD
+# ---------------------------
 @app.route("/admin")
 def admin():
     data = load_users()
@@ -118,11 +149,16 @@ def admin():
     html += "</table>"
     return html
 
+# ---------------------------
 # LOGOUT
+# ---------------------------
 @app.route("/logout")
 def logout():
     session.pop("user", None)
     return redirect("/")
 
+# ---------------------------
+# RUN SERVER
+# ---------------------------
 if __name__=="__main__":
     app.run(host="0.0.0.0", port=10000)
