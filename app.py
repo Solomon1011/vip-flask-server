@@ -38,25 +38,39 @@ def verify(reference):
     try:
         url = f"https://api.paystack.co/transaction/verify/{reference}"
         headers = {"Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"}
-        response = requests.get(url, headers=headers).json()
+        r = requests.get(url, headers=headers)
+        response = r.json()  # parse JSON
 
-        if response.get("status") and response["data"]["status"] == "success":
-            email = response["data"]["customer"]["email"]
-            amount = response["data"]["amount"]
+        # Check if Paystack returned 'status'
+        if not response.get("status"):
+            return f"Payment verification failed: {response}"
 
-            if amount == 745000:
-                plan = "weekly"
-            elif amount == 2755000:
-                plan = "monthly"
-            else:
-                return "Invalid payment amount"
+        data = response.get("data")
+        if not data:
+            return f"No data returned from Paystack: {response}"
 
-            # Save user subscription
-            save_user(email, plan)
+        # Check payment status
+        if data.get("status") != "success":
+            return "Payment was not successful."
 
-            return redirect(url_for("vip", email=email))
+        email = data.get("customer", {}).get("email")
+        amount = data.get("amount")
 
-        return "Payment not verified"
+        if not email or not amount:
+            return f"Invalid data from Paystack: {data}"
+
+        # Determine plan from amount
+        if amount == 745000:
+            plan = "weekly"
+        elif amount == 2755000:
+            plan = "monthly"
+        else:
+            return f"Unknown payment amount: {amount}"
+
+        save_user(email, plan)
+
+        return redirect(url_for("vip", email=email))
+
     except Exception as e:
         return f"Error verifying payment: {str(e)}"
 
