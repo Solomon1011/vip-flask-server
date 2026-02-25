@@ -7,30 +7,45 @@
 </head>
 <body>
 
-<h2>VIP ACCESS 🔒</h2>
+<div class="card vip">
+    <h2>💎 VIP Subscription</h2>
+    <p>Select a plan to continue</p>
 
-<button onclick="payWithPaystack(745000)">
-Weekly - ₦7,450
-</button>
+    <button onclick="payWithPaystack(745000)">
+        Weekly - ₦7,450
+    </button>
 
-<button onclick="payWithPaystack(2755000)">
-Monthly - ₦27,550
-</button>
+    <button onclick="payWithPaystack(2755000)">
+        Monthly - ₦27,550
+    </button>
 
-<br><br>
-<a href="/">Back Home</a>
+    <br><br>
+    <a href="/">Back Home</a>
+</div>
 
 <script>
 function payWithPaystack(amount){
+
+    let userEmail = prompt("Enter your email:");
+
+    if(!userEmail){
+        alert("Email is required!");
+        return;
+    }
+
     let handler = PaystackPop.setup({
         key: "{{ public_key }}",
-        email: "customer@email.com",
+        email: userEmail,
         amount: amount,
         currency: "NGN",
         callback: function(response){
             window.location.href = "/verify/" + response.reference;
+        },
+        onClose: function(){
+            alert("Transaction cancelled");
         }
     });
+
     handler.openIframe();
 }
 </script>
