@@ -1,8 +1,30 @@
-<h2>Free Tips</h2>
-{% for tip in tips %}
-    <div class="card">
-        <h3>{{ tip.match }}</h3>
-        <p>{{ tip.tip }}</p>
-    </div>
-{% endfor %}
-<a href="/">Back Home</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Free Tips</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="title">🆓 FREE TIPS</div>
+
+    {% for tip in tips %}
+        <div class="match-card">
+            <div class="match-title">⚽ {{ tip.match }}</div>
+            <div class="match-tip">{{ tip.tip }}</div>
+            <div class="match-badge">FREE</div>
+        </div>
+    {% endfor %}
+
+    <a href="/" class="card">
+        <span class="icon">🏠</span>
+        Back Home
+    </a>
+
+</div>
+
+</body>
+</html>
