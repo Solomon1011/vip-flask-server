@@ -1,8 +1,8 @@
 import os
 import json
+import requests
 from flask import Flask, render_template, redirect, request, url_for
 from datetime import datetime, timedelta
-import requests
 
 app = Flask(__name__)
 
@@ -11,14 +11,16 @@ PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
 USERS_FILE = "users.json"
 
+
 # ---------------- SAVE USER ----------------
 def save_user(email, plan):
-    expiry = None
 
     if plan == "weekly":
         expiry = datetime.now() + timedelta(days=7)
     elif plan == "monthly":
         expiry = datetime.now() + timedelta(days=30)
+    else:
+        return
 
     user_data = {
         "email": email,
@@ -38,8 +40,9 @@ def save_user(email, plan):
         json.dump(users, f, indent=4)
 
 
-# ---------------- CHECK ACCESS ----------------
+# ---------------- CHECK SUBSCRIPTION ----------------
 def has_active_subscription(email):
+
     try:
         with open(USERS_FILE, "r") as f:
             users = json.load(f)
@@ -61,6 +64,12 @@ def home():
     return render_template("home.html")
 
 
+# ---------------- FREE ----------------
+@app.route("/free")
+def free():
+    return render_template("free.html")
+
+
 # ---------------- SUBSCRIBE PAGE ----------------
 @app.route("/subscribe-plan")
 def subscribe_plan():
@@ -76,24 +85,25 @@ def verify(reference):
 
     response = requests.get(url, headers=headers).json()
 
-    if response["data"]["status"] == "success":
+    if response.get("status"):
 
-        email = response["data"]["customer"]["email"]
-        amount = response["data"]["amount"]
+        if response["data"]["status"] == "success":
 
-        # determine plan from amount
-        if amount == 745000:
-            plan = "weekly"
-        elif amount == 2755000:
-            plan = "monthly"
-        else:
-            return "Invalid payment amount"
+            email = response["data"]["customer"]["email"]
+            amount = response["data"]["amount"]
 
-        save_user(email, plan)
+            if amount == 745000:
+                plan = "weekly"
+            elif amount == 2755000:
+                plan = "monthly"
+            else:
+                return "Invalid payment amount"
 
-        return redirect(url_for("vip"))
+            save_user(email, plan)
 
-    return "Payment not verified"
+            return redirect(url_for("vip", email=email))
+
+    return "Payment verification failed"
 
 
 # ---------------- VIP ----------------
