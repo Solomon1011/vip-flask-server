@@ -126,34 +126,42 @@ def has_active_subscription(email):
 # ---------------- VIP ----------------
 @app.route("/vip")
 def vip():
+    email = request.args.get("email")
+
+    # If someone tries to open VIP without payment
+    if not email:
+        return redirect("/subscribe")
+
     try:
-        email = request.args.get("email")
-        if not email:
-            return redirect(url_for("subscribe_plan"))
+        with open("users.json", "r") as f:
+            users = json.load(f)
+    except:
+        users = []
 
-        try:
-            with open(USERS_FILE, "r") as f:
-                users = json.load(f)
-        except:
-            users = []
+    # Find user
+    user = next((u for u in users if u["email"] == email), None)
 
-        user = next((u for u in users if u["email"] == email), None)
-        if not user:
-            return redirect(url_for("subscribe_plan"))
+    if not user:
+        return redirect("/subscribe")
 
-        expiry = datetime.strptime(user["expiry"], "%Y-%m-%d %H:%M:%S")
-        if datetime.now() > expiry:
-            return "Your VIP subscription has expired. <a href='/subscribe-plan'>Subscribe again</a>"
+    expiry = datetime.strptime(user["expiry"], "%Y-%m-%d %H:%M:%S")
 
-        vip_tips = [
-            {"match": "Man City vs Liverpool", "tip": "Both Teams Score"},
-            {"match": "Barcelona vs Atletico", "tip": "Over 3.5 Goals"}
-        ]
+    # If subscription expired
+    if datetime.now() > expiry:
+        return """
+        <h2>VIP Expired</h2>
+        <p>Your VIP subscription has expired.</p>
+        <a href="/subscribe">Renew Subscription</a>
+        """
 
-        return render_template("vip.html", tips=vip_tips)
+    # VIP Tips
+    vip_tips = [
+        {"match": "Man City vs Liverpool", "tip": "Both Teams To Score"},
+        {"match": "Barcelona vs Atletico", "tip": "Over 3.5 Goals"},
+        {"match": "PSG vs Marseille", "tip": "Over 2.5 Goals"}
+    ]
 
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
+    return render_template("vip.html", tips=vip_tips)
 
 
 # ---------------- RUN ----------------
