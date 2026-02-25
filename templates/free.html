@@ -1,17 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Free Tips</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-
-<div class="card">
-    <h2>🎯 Free Predictions</h2>
-    <p>1️⃣ Man United vs Chelsea → Over 2.5</p>
-    <p>2️⃣ Arsenal vs Liverpool → Both Teams To Score</p>
-    <a href="/">Back Home</a>
-</div>
-
-</body>
-</html>
+<h2>Free Tips</h2>
+{% for tip in tips %}
+    <div class="card">
+        <h3>{{ tip.match }}</h3>
+        <p>{{ tip.tip }}</p>
+    </div>
+{% endfor %}
+<a href="/">Back Home</a>
