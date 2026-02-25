@@ -2,28 +2,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Subscribe VIP</title>
+    <title>VIP Subscription</title>
     <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
-    <h2>💎 VIP Subscription</h2>
-    <button onclick="payWithPaystack()">Subscribe Weekly - ₦7,450</button>
+    <h2>Subscribe to VIP</h2>
+
+    <button onclick="pay()">Subscribe - ₦7,450</button>
 
     <script>
-    function payWithPaystack(){
-        let userEmail = prompt("Enter your email:");
-        if(!userEmail){ alert("Email required"); return; }
+    function pay(){
+        let email = prompt("Enter your email:");
+        if(!email){
+            alert("Email required");
+            return;
+        }
 
         let handler = PaystackPop.setup({
-            key: "YOUR_PUBLIC_KEY", // replace with your test/live public key
-            email: userEmail,
+            key: "YOUR_PUBLIC_KEY",
+            email: email,
             amount: 745000,
             currency: "NGN",
             callback: function(response){
                 window.location.href = "/verify/" + response.reference;
             },
-            onClose: function(){ alert("Transaction cancelled"); }
+            onClose: function(){
+                alert("Transaction cancelled");
+            }
         });
+
         handler.openIframe();
     }
     </script>
