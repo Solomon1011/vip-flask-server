@@ -1,12 +1,32 @@
-<h2>VIP Tips</h2>
-{% if tips %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VIP Tips</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="title">💎 VIP MATCHES</div>
+
     {% for tip in tips %}
-        <div class="card vip-card">
-            <h3>{{ tip.match }}</h3>
-            <p>{{ tip.tip }}</p>
+        <div class="card">
+            <span class="icon">⚽</span>
+            <div>
+                <strong>{{ tip.match }}</strong><br>
+                {{ tip.tip }}
+            </div>
         </div>
     {% endfor %}
-{% else %}
-    <p>No VIP tips available at the moment.</p>
-{% endif %}
-<a href="/">Back Home</a>
+
+    <a href="/" class="card">
+        <span class="icon">🏠</span>
+        Back Home
+    </a>
+
+</div>
+
+</body>
+</html>
