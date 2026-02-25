@@ -12,12 +12,10 @@
     <div class="title">💎 VIP MATCHES</div>
 
     {% for tip in tips %}
-        <div class="card">
-            <span class="icon">⚽</span>
-            <div>
-                <strong>{{ tip.match }}</strong><br>
-                {{ tip.tip }}
-            </div>
+        <div class="match-card">
+            <div class="match-title">🔥 {{ tip.match }}</div>
+            <div class="match-tip">{{ tip.tip }}</div>
+            <div class="match-badge">VIP</div>
         </div>
     {% endfor %}
 
