@@ -1,4 +1,3 @@
-
 import os
 import json
 import requests
@@ -7,16 +6,18 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-# Paystack keys from environment variables
+# Paystack keys (set in Render environment)
 PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY")
 PAYSTACK_PUBLIC_KEY = os.environ.get("PAYSTACK_PUBLIC_KEY")
 
-USERS_FILE = "users.json"  # Stores subscribers
+USERS_FILE = "users.json"  # Stores VIP users
+
 
 # ---------------- HOME ----------------
 @app.route("/")
 def home():
     return render_template("home.html")
+
 
 # ---------------- FREE TIPS ----------------
 @app.route("/free")
@@ -27,10 +28,12 @@ def free():
     ]
     return render_template("free.html", tips=free_tips)
 
+
 # ---------------- SUBSCRIBE PAGE ----------------
 @app.route("/subscribe-plan")
 def subscribe_plan():
     return render_template("subscribe.html", public_key=PAYSTACK_PUBLIC_KEY)
+
 
 # ---------------- VERIFY PAYMENT ----------------
 @app.route("/verify/<reference>")
@@ -39,40 +42,56 @@ def verify(reference):
         url = f"https://api.paystack.co/transaction/verify/{reference}"
         headers = {"Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"}
         r = requests.get(url, headers=headers)
-        response = r.json()  # parse JSON
 
-        # Check if Paystack returned 'status'
-        if not response.get("status"):
-            return f"Payment verification failed: {response}"
+        # Parse JSON safely
+        try:
+            response = r.json()
+        except Exception as e:
+            return f"Could not parse JSON from Paystack: {str(e)}\nRaw response: {r.text}"
+
+        # Debug: see full JSON
+        print("Paystack Response:", json.dumps(response, indent=4))
+
+        # Check if response is valid
+        if not isinstance(response, dict) or "status" not in response:
+            return f"Unexpected response format: {response}"
+
+        if not response["status"]:
+            return f"Payment failed: {response}"
 
         data = response.get("data")
-        if not data:
-            return f"No data returned from Paystack: {response}"
+        if not isinstance(data, dict):
+            return f"Unexpected data format: {data}"
 
-        # Check payment status
         if data.get("status") != "success":
-            return "Payment was not successful."
+            return f"Payment not successful: {data}"
 
-        email = data.get("customer", {}).get("email")
+        customer = data.get("customer")
+        if not isinstance(customer, dict):
+            return f"Invalid customer data: {customer}"
+
+        email = customer.get("email")
         amount = data.get("amount")
 
         if not email or not amount:
-            return f"Invalid data from Paystack: {data}"
+            return f"Missing email or amount in Paystack response: {data}"
 
-        # Determine plan from amount
+        # Determine plan
         if amount == 745000:
             plan = "weekly"
         elif amount == 2755000:
             plan = "monthly"
         else:
-            return f"Unknown payment amount: {amount}"
+            return f"Unknown amount: {amount}"
 
+        # Save user subscription
         save_user(email, plan)
 
         return redirect(url_for("vip", email=email))
 
     except Exception as e:
         return f"Error verifying payment: {str(e)}"
+
 
 # ---------------- SAVE USER ----------------
 def save_user(email, plan):
@@ -102,6 +121,7 @@ def save_user(email, plan):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=4)
 
+
 # ---------------- CHECK SUBSCRIPTION ----------------
 def has_active_subscription(email):
     try:
@@ -115,15 +135,14 @@ def has_active_subscription(email):
             expiry = datetime.strptime(user["expiry"], "%Y-%m-%d %H:%M:%S")
             if datetime.now() < expiry:
                 return True
-
     return False
+
 
 # ---------------- VIP ----------------
 @app.route("/vip")
 def vip():
     try:
         email = request.args.get("email")
-
         if not email:
             return redirect(url_for("subscribe_plan"))
 
@@ -155,6 +174,7 @@ def vip():
 
     except Exception as e:
         return f"An error occurred: {str(e)}"
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
