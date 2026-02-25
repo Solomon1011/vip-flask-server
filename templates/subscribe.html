@@ -1,54 +1,31 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>Subscribe VIP</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-<script src="https://js.paystack.co/v1/inline.js"></script>
+    <title>Subscribe VIP</title>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
 <body>
-
-<div class="card vip">
     <h2>💎 VIP Subscription</h2>
-    <p>Select a plan to continue</p>
+    <button onclick="payWithPaystack()">Subscribe Weekly - ₦7,450</button>
 
-    <button onclick="payWithPaystack(745000)">
-        Weekly - ₦7,450
-    </button>
+    <script>
+    function payWithPaystack(){
+        let userEmail = prompt("Enter your email:");
+        if(!userEmail){ alert("Email required"); return; }
 
-    <button onclick="payWithPaystack(2755000)">
-        Monthly - ₦27,550
-    </button>
-
-    <br><br>
-    <a href="/">Back Home</a>
-</div>
-
-<script>
-function payWithPaystack(amount){
-
-    let userEmail = prompt("Enter your email:");
-
-    if(!userEmail){
-        alert("Email is required!");
-        return;
+        let handler = PaystackPop.setup({
+            key: "YOUR_PUBLIC_KEY", // replace with your test/live public key
+            email: userEmail,
+            amount: 745000,
+            currency: "NGN",
+            callback: function(response){
+                window.location.href = "/verify/" + response.reference;
+            },
+            onClose: function(){ alert("Transaction cancelled"); }
+        });
+        handler.openIframe();
     }
-
-    let handler = PaystackPop.setup({
-        key: "{{ public_key }}",
-        email: userEmail,
-        amount: amount,
-        currency: "NGN",
-        callback: function(response){
-            window.location.href = "/verify/" + response.reference;
-        },
-        onClose: function(){
-            alert("Transaction cancelled");
-        }
-    });
-
-    handler.openIframe();
-}
-</script>
-
+    </script>
 </body>
 </html>
