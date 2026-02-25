@@ -55,3 +55,37 @@ body {
 .icon {
     font-size: 22px;
 }
+
+.match-card {
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(145deg, #111, #1c1c1c);
+    border: 2px solid #f5c400;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 0 15px rgba(245,196,0,0.15);
+}
+
+.match-title {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #f5c400;
+}
+
+.match-tip {
+    font-size: 15px;
+    color: #fff;
+    opacity: 0.9;
+}
+
+.match-badge {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 20px;
+    border: 1px solid #f5c400;
+    color: #f5c400;
+}
