@@ -1,17 +1,12 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>VIP Tips</title>
-</head>
-<body>
-    <h2>💎 VIP Tips</h2>
-
+<h2>VIP Tips</h2>
+{% if tips %}
     {% for tip in tips %}
-        <div>
+        <div class="card vip-card">
             <h3>{{ tip.match }}</h3>
             <p>{{ tip.tip }}</p>
-            <hr>
         </div>
     {% endfor %}
-</body>
-</html>
+{% else %}
+    <p>No VIP tips available at the moment.</p>
+{% endif %}
+<a href="/">Back Home</a>
