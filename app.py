@@ -39,42 +39,46 @@ def subscribe_plan():
 @app.route("/verify/<reference>")
 def verify(reference):
     try:
+        import json
         url = f"https://api.paystack.co/transaction/verify/{reference}"
         headers = {"Authorization": f"Bearer {PAYSTACK_SECRET_KEY}"}
         r = requests.get(url, headers=headers)
 
-        # Parse JSON safely
+        # Try to parse JSON safely
         try:
             response = r.json()
         except Exception as e:
             return f"Could not parse JSON from Paystack: {str(e)}\nRaw response: {r.text}"
 
-        # Debug: see full JSON
+        # DEBUG: print full response to logs
         print("Paystack Response:", json.dumps(response, indent=4))
 
-        # Check if response is valid
-        if not isinstance(response, dict) or "status" not in response:
+        # Make sure it's a dict
+        if not isinstance(response, dict):
             return f"Unexpected response format: {response}"
 
-        if not response["status"]:
-            return f"Payment failed: {response}"
+        # Check API status
+        if not response.get("status"):
+            return f"Payment verification failed: {response}"
 
+        # Get 'data' safely
         data = response.get("data")
         if not isinstance(data, dict):
-            return f"Unexpected data format: {data}"
+            return f"Invalid data format from Paystack: {data}"
 
         if data.get("status") != "success":
             return f"Payment not successful: {data}"
 
+        # Get customer email safely
         customer = data.get("customer")
         if not isinstance(customer, dict):
-            return f"Invalid customer data: {customer}"
+            return f"Invalid customer info: {customer}"
 
         email = customer.get("email")
         amount = data.get("amount")
 
         if not email or not amount:
-            return f"Missing email or amount in Paystack response: {data}"
+            return f"Missing email or amount: {data}"
 
         # Determine plan
         if amount == 745000:
@@ -84,9 +88,10 @@ def verify(reference):
         else:
             return f"Unknown amount: {amount}"
 
-        # Save user subscription
+        # Save VIP user
         save_user(email, plan)
 
+        # Redirect to VIP page
         return redirect(url_for("vip", email=email))
 
     except Exception as e:
