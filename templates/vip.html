@@ -1,18 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>VIP Match</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>VIP Tips</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+    <h1>💎 VIP Tips</h1>
 
-<div class="card vip">
-    <h2>💎 VIP Predictions</h2>
-    <p>Today's Date: <script>document.write(new Date().toLocaleDateString())</script></p>
-    <p>1️⃣ Man United vs Chelsea → Correct Score 2-1</p>
-    <p>2️⃣ Real Madrid vs Barcelona → Over 3.5 Goals</p>
+    {% if tips %}
+        {% for tip in tips %}
+            <div class="card vip-card">
+                <h3>{{ tip.match }}</h3>
+                <p>{{ tip.tip }}</p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No VIP tips available at the moment.</p>
+    {% endif %}
+
     <a href="/">Back Home</a>
-</div>
-
 </body>
 </html>
