@@ -48,3 +48,11 @@ if (vipActive === "true" && vipExpiry && now < new Date(vipExpiry)) {
   alert("VIP subscription expired. Please renew.");
   window.location.href = "index.html"; // go back to payment page
 }
+<input type="email" id="email" placeholder="Enter your email" required>
+<select id="plan">
+  <option value="weekly">Weekly - ₦7,550</option>
+  <option value="monthly">Monthly - ₦27,550</option>
+</select>
+<button onclick="payWithPaystack(document.getElementById('email').value, document.getElementById('plan').value)">
+  Subscribe VIP
+</button>
