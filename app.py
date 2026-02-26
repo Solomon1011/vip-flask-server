@@ -27,8 +27,12 @@ def subscribe():
 # ---------------- VIP (TEST VERSION) ----------------
 @app.route("/vip")
 def vip():
+    if not session.get("vip"):
+        return redirect("/subscribe")
+
     with open("tips.json") as f:
         data = json.load(f)
+
     return render_template("vip.html", tips=data["vip"])
 
 if __name__ == "__main__":
