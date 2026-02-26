@@ -11,13 +11,27 @@
 
     <div class="title">💎 VIP MATCHES</div>
 
-    {% for tip in tips %}
-        <div class="match-card">
-            <div class="match-title">🔥 {{ tip.match }}</div>
-            <div class="match-tip">{{ tip.tip }}</div>
-            <div class="match-badge">VIP</div>
-        </div>
-    {% endfor %}
+    {% if session.vip %}
+  {% for tip in tips %}
+    <div class="match-card">
+      <div class="match-title">{{ tip.match }}</div>
+      <div class="match-tip">{{ tip.tip }}</div>
+      <div class="match-badge">VIP</div>
+    </div>
+  {% endfor %}
+{% else %}
+  {% for tip in tips %}
+    <div class="match-card blur">
+      <div class="match-title">VIP Correct Score</div>
+      <div class="match-tip">Subscribe to unlock</div>
+      <div class="match-badge">LOCKED</div>
+    </div>
+  {% endfor %}
+
+  <a href="/subscribe" class="card">
+    🔓 Subscribe to VIP
+  </a>
+{% endif %}
 
     <a href="/" class="card">
         <span class="icon">🏠</span>
