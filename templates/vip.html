@@ -1,60 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VIP Tips</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>VIP Tips</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
+<h2 style="text-align:center;color:#f1c40f;">👑 VIP TIPS</h2>
 
-    <div class="title">💎 VIP MATCHES</div>
+<div class="vip-container">
 
-    {% if session.vip %}
-  {% for tip in tips %}
-    <div class="match-card">
-      <div class="match-title">{{ tip.match }}</div>
-      <div class="match-tip">{{ tip.tip }}</div>
-      <div class="match-badge">VIP</div>
-    </div>
-  {% endfor %}
-{% else %}
-  {% for tip in tips %}
-    <div class="match-card blur">
-      <div class="match-title">VIP Correct Score</div>
-      <div class="match-tip">Subscribe to unlock</div>
-      <div class="match-badge">LOCKED</div>
-    </div>
-  {% endfor %}
+  <!-- VIP TIP 1 -->
+  <div class="vip-card">
+    <h3>Arsenal vs Chelsea</h3>
+    <div class="tip blur">Correct Score: 2 - 1</div>
+    <div class="lock">🔒 Subscribe to unlock</div>
+  </div>
 
-  <a href="/subscribe" class="card">
-    🔓 Subscribe to VIP
-  </a>
-{% endif %}
-
-    <a href="/" class="card">
-        <span class="icon">🏠</span>
-        Back Home
-    </a>
+  <!-- VIP TIP 2 -->
+  <div class="vip-card">
+    <h3>Barcelona vs Sevilla</h3>
+    <div class="tip blur">Correct Score: 3 - 0</div>
+    <div class="lock">🔒 Subscribe to unlock</div>
+  </div>
 
 </div>
 
+<!-- Step 5: VIP expiry check -->
+<script src="js/vip.js"></script>
+
 </body>
 </html>
-// VIP Expiry Check
-const vipActive = localStorage.getItem("vip_active");
-const vipExpiry = localStorage.getItem("vip_expiry");
-const now = new Date();
-
-if (vipActive === "true" && vipExpiry && now < new Date(vipExpiry)) {
-  // VIP still valid → show tips
-  document.querySelectorAll(".blur").forEach(el => el.classList.remove("blur"));
-} else {
-  // VIP expired or not active
-  localStorage.removeItem("vip_active");
-  localStorage.removeItem("vip_expiry");
-
-  alert("Your VIP subscription has expired. Please renew.");
-  window.location.href = "index.html"; // redirect to subscription page
-}
