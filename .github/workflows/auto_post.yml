@@ -1,0 +1,30 @@
+name: Auto Post Tips
+
+on:
+  schedule:
+    - cron: "0 8 * * *"   # 9am Nigeria time
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Run update script
+        run: python update_tips.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add tips.json
+          git commit -m "Auto update tips"
+          git push
