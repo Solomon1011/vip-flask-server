@@ -12,10 +12,9 @@ def home():
 # ---------------- FREE ----------------
 @app.route("/free")
 def free():
-    tips = [
-        {"match": "Arsenal vs Chelsea", "tip": "Over 2.5 Goals"}
-    ]
-    return render_template("free.html", tips=tips)
+    with open("tips.json") as f:
+        data = json.load(f)
+    return render_template("free.html", tips=data["free"])
 
 # ---------------- SUBSCRIBE ----------------
 @app.route("/subscribe")
@@ -25,7 +24,9 @@ def subscribe():
 # ---------------- VIP (TEST VERSION) ----------------
 @app.route("/vip")
 def vip():
-    return render_template("vip.html")
+    with open("tips.json") as f:
+        data = json.load(f)
+    return render_template("vip.html", tips=data["vip"])
 
 if __name__ == "__main__":
     app.run()
