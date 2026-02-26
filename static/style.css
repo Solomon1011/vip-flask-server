@@ -94,3 +94,38 @@ body {
   pointer-events: none;
   user-select: none;
 }
+.vip-container {
+  max-width: 500px;
+  margin: 30px auto;
+}
+
+.vip-card {
+  border: 2px solid #f1c40f;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background: linear-gradient(180deg, #111, #000);
+  color: #fff;
+}
+
+.vip-card h3 {
+  margin: 0 0 10px;
+  color: #f1c40f;
+}
+
+.vip-card .tip {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.blur {
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.lock {
+  text-align: center;
+  color: #f1c40f;
+  font-weight: bold;
+  margin-top: 10px;
+}
