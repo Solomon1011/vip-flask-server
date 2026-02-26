@@ -89,3 +89,8 @@ body {
     border: 1px solid #f5c400;
     color: #f5c400;
 }
+.blur {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+}
