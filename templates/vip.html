@@ -1,85 +1,87 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>VIP Tips</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>VIP Subscription</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+
+    .vip-box {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 400px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background: #0aa83f;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #088a33;
+    }
+  </style>
 </head>
 <body>
 
-<h2 style="text-align:center;color:#f1c40f;">👑 VIP TIPS</h2>
+  <div class="vip-box">
+    <h2>Subscribe to VIP</h2>
 
-<div class="vip-container">
+    <button onclick="payVIP('weekly')">
+      Weekly – ₦7,550
+    </button>
 
-  <!-- VIP TIP 1 -->
-  <div class="vip-card">
-    <h3>Arsenal vs Chelsea</h3>
-    <div class="tip blur">Correct Score: 2 - 1</div>
-    <div class="lock">🔒 Subscribe to unlock</div>
+    <button onclick="payVIP('monthly')">
+      Monthly – ₦27,550
+    </button>
   </div>
 
-  <!-- VIP TIP 2 -->
-  <div class="vip-card">
-    <h3>Barcelona vs Sevilla</h3>
-    <div class="tip blur">Correct Score: 3 - 0</div>
-    <div class="lock">🔒 Subscribe to unlock</div>
-  </div>
+  <!-- PAYSTACK SCRIPT -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
 
-</div>
+  <script>
+    function payVIP(plan) {
 
-<!-- Step 5: VIP expiry check -->
-<script src="js/vip.js"></script>
+      var amount = plan === 'weekly' ? 755000 : 2755000;
+
+      var handler = PaystackPop.setup({
+        key: 'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e',
+        email: 'customer@email.com',
+        amount: amount,
+        currency: 'NGN',
+        ref: 'VIP_' + Math.floor(Math.random() * 1000000000),
+
+        callback: function(response) {
+          alert('Payment successful! Reference: ' + response.reference);
+          // redirect if you want
+          // window.location.href = "vip-success.html";
+        },
+
+        onClose: function() {
+          alert('Payment cancelled');
+        }
+      });
+
+      handler.openIframe();
+    }
+  </script>
 
 </body>
 </html>
-// VIP Expiry Check
-const vipActive = localStorage.getItem("vip_active");
-const vipExpiry = localStorage.getItem("vip_expiry");
-const now = new Date();
-
-if (vipActive === "true" && vipExpiry && now < new Date(vipExpiry)) {
-  // VIP still valid → show tips
-  document.querySelectorAll(".blur").forEach(el => el.classList.remove("blur"));
-  document.querySelectorAll(".lock").forEach(el => el.style.display = "none");
-} else {
-  // VIP expired or not active
-  localStorage.removeItem("vip_active");
-  localStorage.removeItem("vip_expiry");
-
-  alert("VIP subscription expired. Please renew.");
-  window.location.href = "index.html"; // go back to payment page
-}
-<input type="email" id="email" placeholder="Enter your email" required>
-<select id="plan">
-  <option value="weekly">Weekly - ₦7,550</option>
-  <option value="monthly">Monthly - ₦27,550</option>
-</select>
-<button onclick="payWithPaystack(document.getElementById('email').value, document.getElementById('plan').value)">
-  Subscribe VIP
-</button>
-<script src="https://js.paystack.co/v1/inline.js"></script>
-  <script>
-function payVIP(plan) {
-  let amount = plan === 'weekly' ? 755000 : 2755000;
-
-  let handler = PaystackPop.setup({
-    key: 'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e',
-    email: 'user@email.com',
-    amount: amount,
-    currency: 'NGN',
-    callback: function(response) {
-      localStorage.setItem('vip_expiry',
-        plan === 'weekly'
-        ? Date.now() + 7 * 24 * 60 * 60 * 1000
-        : Date.now() + 30 * 24 * 60 * 60 * 1000
-      );
-      alert('Payment successful!');
-      location.reload();
-    },
-    onClose: function() {
-      alert('Payment cancelled');
-    }
-  });
-
-  handler.openIframe();
-}
-  </script>
