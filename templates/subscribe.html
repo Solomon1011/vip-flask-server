@@ -8,23 +8,23 @@
 
 <h2>Subscribe to VIP</h2>
 
-<button onclick="payWeekly()">Weekly – ₦2,000</button>
-<button onclick="payMonthly()">Monthly – ₦7,450</button>
+<button onclick="payWeekly()">Weekly – ₦7550</button>
+<button onclick="payMonthly()">Monthly – ₦27550</button>
 
 <script>
-const publicKey = "{{pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e}}";
+const publicKey = "pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e";
 
 function payWeekly() {
-  pay(200000);
+  pay(7550);
 }
 
 function payMonthly() {
-  pay(745000);
+  pay(27550);
 }
 
 function pay(amount) {
   let handler = PaystackPop.setup({
-    key: publicKey,
+    key: pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e,
     email: "user@email.com",
     amount: amount,
     currency: "NGN",
