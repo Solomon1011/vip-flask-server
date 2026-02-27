@@ -32,8 +32,11 @@ vip_results_today = []
 # -------------------------------
 # TELEGRAM SETTINGS
 # -------------------------------
-TELEGRAM_BOT_TOKEN = "8632563857:AAFUx-Aj1n8wf2JWnvR9YeRVRpidnPfTJMY"       # Replace with your bot token
-TELEGRAM_CHANNEL_ID = "https://t.me/daily_correct_score2"    # Replace with your channel username
+from telegram import Bot
+
+TELEGRAM_BOT_TOKEN = "PASTE_NEW_TOKEN_HERE"
+TELEGRAM_CHANNEL_ID = "@daily_correct_score2"
+
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # -------------------------------
