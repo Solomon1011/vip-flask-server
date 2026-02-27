@@ -57,3 +57,29 @@ if (vipActive === "true" && vipExpiry && now < new Date(vipExpiry)) {
   Subscribe VIP
 </button>
 <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script>
+function payVIP(plan) {
+  let amount = plan === 'weekly' ? 755000 : 2755000;
+
+  let handler = PaystackPop.setup({
+    key: 'pk_live_YOUR_PUBLIC_KEY_HERE',
+    email: 'user@email.com',
+    amount: amount,
+    currency: 'NGN',
+    callback: function(response) {
+      localStorage.setItem('vip_expiry',
+        plan === 'weekly'
+        ? Date.now() + 7 * 24 * 60 * 60 * 1000
+        : Date.now() + 30 * 24 * 60 * 60 * 1000
+      );
+      alert('Payment successful!');
+      location.reload();
+    },
+    onClose: function() {
+      alert('Payment cancelled');
+    }
+  });
+
+  handler.openIframe();
+}
+  </script>
