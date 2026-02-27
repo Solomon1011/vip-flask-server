@@ -1,7 +1,8 @@
 from flask import Flask, render_template
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 import time
+from telegram import Bot
 
 app = Flask(__name__)
 
@@ -29,6 +30,13 @@ today_vip_tips = []
 vip_results_today = []
 
 # -------------------------------
+# TELEGRAM SETTINGS
+# -------------------------------
+TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN"       # Replace with your bot token
+TELEGRAM_CHANNEL_ID = "@YourChannelName"    # Replace with your channel username
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+# -------------------------------
 # FUNCTION TO UPDATE TIPS DAILY AT 9AM
 # -------------------------------
 def update_daily_tips():
@@ -40,20 +48,37 @@ def update_daily_tips():
             index = now.day % len(free_tips_list)
             today_free_tips = free_tips_list[index]
             today_vip_tips = vip_tips_list[index]
-            # For demo, mark all VIP tips as "win" for results
+
+            # VIP results (all wins for demo)
             vip_results_today = [tip + " ✅" for tip in today_vip_tips]
 
             print(f"[{datetime.now()}] Today's tips and VIP results updated!")
-            time.sleep(60)  # avoid multiple triggers in the same minute
+
+            # -------------------------------
+            # POST TO TELEGRAM
+            # -------------------------------
+            try:
+                # Free Tips
+                free_message = "📌 Free Tips Today:\n" + "\n".join(today_free_tips)
+                bot.send_message(chat_id=TELEGRAM_CHANNEL_ID, text=free_message)
+
+                # VIP Tips (locked)
+                vip_message = "🔒 VIP Tips Today: (Subscribe to unlock in the app!)"
+                bot.send_message(chat_id=TELEGRAM_CHANNEL_ID, text=vip_message)
+
+            except Exception as e:
+                print("Error sending to Telegram:", e)
+
+            # Wait 60 seconds to prevent duplicate posts in the same minute
+            time.sleep(60)
         time.sleep(20)
 
-# Start scheduler in background thread
+# Start scheduler in a background thread
 threading.Thread(target=update_daily_tips, daemon=True).start()
 
 # -------------------------------
 # ROUTES
 # -------------------------------
-
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -74,10 +99,10 @@ def vip_results():
 # START SERVER
 # -------------------------------
 if __name__ == "__main__":
-    # Initialize today's tips immediately on startup
+    # Initialize today's tips immediately
     today_index = datetime.now().day % len(free_tips_list)
     today_free_tips = free_tips_list[today_index]
     today_vip_tips = vip_tips_list[today_index]
-    # Initialize VIP results
     vip_results_today = [tip + " ✅" for tip in today_vip_tips]
+
     app.run(debug=True)
