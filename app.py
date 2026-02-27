@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template
 from datetime import datetime, timedelta
 import threading
 import time
@@ -23,27 +23,31 @@ vip_tips_list = [
     ["Bayern vs Dortmund 2:2", "Juventus vs Napoli 1:0"]
 ]
 
-# Storage for today's tips
+# Storage for today's tips and VIP results
 today_free_tips = []
 today_vip_tips = []
+vip_results_today = []
 
 # -------------------------------
 # FUNCTION TO UPDATE TIPS DAILY AT 9AM
 # -------------------------------
 def update_daily_tips():
-    global today_free_tips, today_vip_tips
+    global today_free_tips, today_vip_tips, vip_results_today
     while True:
         now = datetime.now()
-        # If it's exactly 9 AM
+        # Update tips at exactly 9 AM
         if now.hour == 9 and now.minute == 0:
             index = now.day % len(free_tips_list)
             today_free_tips = free_tips_list[index]
             today_vip_tips = vip_tips_list[index]
-            print(f"[{datetime.now()}] Today's tips updated!")
-            time.sleep(60)  # Wait to avoid multiple triggers within the same minute
+            # For demo, mark all VIP tips as "win" for results
+            vip_results_today = [tip + " ✅" for tip in today_vip_tips]
+
+            print(f"[{datetime.now()}] Today's tips and VIP results updated!")
+            time.sleep(60)  # avoid multiple triggers in the same minute
         time.sleep(20)
 
-# Start the scheduler in a background thread
+# Start scheduler in background thread
 threading.Thread(target=update_daily_tips, daemon=True).start()
 
 # -------------------------------
@@ -62,9 +66,18 @@ def free():
 def subscribe():
     return render_template("vip.html", tips=today_vip_tips)
 
+@app.route("/vip_results")
+def vip_results():
+    return render_template("vip_results.html", results=vip_results_today)
+
+# -------------------------------
+# START SERVER
+# -------------------------------
 if __name__ == "__main__":
     # Initialize today's tips immediately on startup
     today_index = datetime.now().day % len(free_tips_list)
     today_free_tips = free_tips_list[today_index]
     today_vip_tips = vip_tips_list[today_index]
+    # Initialize VIP results
+    vip_results_today = [tip + " ✅" for tip in today_vip_tips]
     app.run(debug=True)
