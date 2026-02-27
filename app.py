@@ -33,7 +33,7 @@ vip_results_today = []
 # TELEGRAM SETTINGS
 # -------------------------------
 TELEGRAM_BOT_TOKEN = "8632563857:AAFUx-Aj1n8wf2JWnvR9YeRVRpidnPfTJMY"       # Replace with your bot token
-TELEGRAM_CHANNEL_ID = "@YourChannelName"    # Replace with your channel username
+TELEGRAM_CHANNEL_ID = "1003753887968"    # Replace with your channel username
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # -------------------------------
