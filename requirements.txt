@@ -1,3 +1,5 @@
 Flask
 requests
 gunicorn
+Flask
+python-telegram-bot==13.15
