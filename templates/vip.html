@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,7 +64,7 @@
       let amount = plan === 'weekly' ? 755000 : 2755000;
 
       let handler = PaystackPop.setup({
-        key: 'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e',
+        key: 'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e', // Replace with your key
         email: 'testuser@email.com',
         amount: amount,
         currency: 'NGN',
@@ -77,8 +78,11 @@
           localStorage.setItem('vip_active', 'true');
           localStorage.setItem('vip_expiry', expiry.getTime());
 
-          alert('Payment successful!');
-          location.reload();
+          alert('Payment successful! VIP unlocked.');
+
+          // ✅ Show VIP tips immediately without reloading
+          document.getElementById('subscribeBox').style.display = 'none';
+          document.getElementById('vipTips').style.display = 'block';
         },
 
         onClose: function() {
