@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>VIP Subscription</title>
 
-  <!-- Paystack Script (MUST be here) -->
+  <!-- Paystack Script -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
 
   <style>
@@ -14,6 +14,7 @@
       padding: 30px;
       text-align: center;
     }
+
     button {
       padding: 15px 25px;
       margin: 10px;
@@ -24,50 +25,88 @@
       background: #0aa83f;
       color: #fff;
     }
+
+    #vipTips {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
-  <h2>Subscribe to VIP</h2>
-  <p>Weekly – ₦7,550</p>
-  <p>Monthly – ₦27,550</p>
+  <!-- SUBSCRIBE SECTION -->
+  <div id="subscribeBox">
+    <h2>Subscribe to VIP</h2>
+    <p>Weekly – ₦7,550</p>
+    <p>Monthly – ₦27,550</p>
 
-  <button onclick="payWeekly()">Weekly VIP</button>
-  <button onclick="payMonthly()">Monthly VIP</button>
+    <button onclick="payVIP('weekly')">Weekly VIP</button>
+    <button onclick="payVIP('monthly')">Monthly VIP</button>
+  </div>
 
+  <!-- VIP TIPS (HIDDEN UNTIL PAYMENT) -->
+  <div id="vipTips" style="display:none;">
+    <h2>VIP Tips</h2>
+    <ul>
+      <li>Arsenal vs Chelsea – Over 2.5</li>
+      <li>Barcelona vs Sevilla – Home Win</li>
+      <li>Bayern vs Dortmund – Both Teams to Score</li>
+    </ul>
+  </div>
+
+  <!-- PAYMENT SCRIPT -->
   <script>
-    function payWeekly() {
+    function payVIP(plan) {
+
+      let amount = plan === 'weekly' ? 755000 : 2755000;
+
       let handler = PaystackPop.setup({
         key: 'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e',
         email: 'testuser@email.com',
-        amount: 755000,
+        amount: amount,
         currency: 'NGN',
-        ref: 'WEEKLY_' + Math.floor(Math.random() * 1000000000),
+        ref: plan.toUpperCase() + '_' + Math.floor(Math.random() * 1000000000),
+
         callback: function(response) {
-          alert('Payment successful! Ref: ' + response.reference);
+          let days = plan === 'weekly' ? 7 : 30;
+          let expiry = new Date();
+          expiry.setDate(expiry.getDate() + days);
+
+          localStorage.setItem('vip_active', 'true');
+          localStorage.setItem('vip_expiry', expiry.getTime());
+
+          alert('Payment successful!');
+          location.reload();
         },
+
         onClose: function() {
-          alert('Payment window closed');
+          alert('Payment cancelled');
         }
       });
+
       handler.openIframe();
     }
+  </script>
 
-    function payMonthly() {
-      let handler = PaystackPop.setup({
-        key:  'pk_test_8f53865d8bded27a891f25b99bcdc15ccd9c6d6e',
-        email: 'testuser@email.com',
-        amount: 2755000,
-        currency: 'NGN',
-        ref: 'MONTHLY_' + Math.floor(Math.random() * 1000000000),
-        callback: function(response) {
-          alert('Payment successful! Ref: ' + response.reference);
-        },
-        onClose: function() {
-          alert('Payment window closed');
-        }
-      });
-      handler.openIframe();
+  <!-- VIP CHECK SCRIPT -->
+  <script>
+    let vipActive = localStorage.getItem('vip_active');
+    let vipExpiry = localStorage.getItem('vip_expiry');
+
+    if (vipActive === 'true' && vipExpiry && Date.now() < vipExpiry) {
+      document.getElementById('vipTips').style.display = 'block';
+      document.getElementById('subscribeBox').style.display = 'none';
+    } else {
+      document.getElementById('vipTips').style.display = 'none';
+      document.getElementById('subscribeBox').style.display = 'block';
+
+      if (vipExpiry && Date.now() > vipExpiry) {
+        alert('VIP expired. Please renew.');
+        localStorage.removeItem('vip_active');
+        localStorage.removeItem('vip_expiry');
+      }
     }
   </script>
 
