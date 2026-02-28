@@ -1,75 +1,72 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SOLO CORRECT SCORE</title>
+    <meta charset="UTF-8">
+    <title>Daily Correct Score</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 30px;
+        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
+        h1 { color: #333; }
+        .card { 
+            background: #fff; 
+            padding: 20px; 
+            margin: 15px 0; 
+            border-radius: 10px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+            cursor: pointer;
+            transition: 0.3s;
         }
-
-        .card {
-            width: 90%;
-            max-width: 400px;
-            background: #fff;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 10px;
-            font-size: 20px;
-            text-align: center;
-            text-decoration: none;
-            color: #000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .card .icon {
-            font-size: 28px;
-            margin-right: 15px;
-        }
-
-        .title {
-            font-size: 32px;
+        .card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
+        .notification { 
+            padding: 10px; 
+            background-color: #ffeb3b; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
             font-weight: bold;
-            margin-bottom: 30px;
-            color: #0aa83f;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
+    <h1>Daily Correct Score</h1>
+    <div id="notification" class="notification" style="display:none;">
+        🎯 New Tips Today!
+    </div>
 
-    <div class="title">SOLO CORRECT SCORE</div>
-
-    <a href="/free" class="card">
-        <span class="icon">🆓</span>
+    <div class="card" onclick="location.href='/free'">
         Free Tips
-    </a>
+    </div>
 
-    <a href="/subscribe" class="card">
-        <span class="icon">🔒</span>
-        VIP Match
-    </a>
+    <div class="card" onclick="location.href='/subscribe'">
+        VIP Tips
+    </div>
 
-    <a href="/vip_results" class="card">
-        <span class="icon">📊</span>
-        VIP Results
-    </a>
+    <div class="card" onclick="location.href='/vip_results'">
+        VIP Results ✅
+    </div>
 
-<a href="https://t.me/daily_correct_score2" class="card" target="_blank">
-    <span class="icon">📢</span>
-    Telegram Channel
-</a>
+    <script>
+        // Function to check for new tips every 60 seconds
+        async function checkNewTips() {
+            try {
+                const response = await fetch('/api/today_tips');
+                const data = await response.json();
 
-</div>
+                if (data.free.length > 0 || data.vip.length > 0) {
+                    document.getElementById('notification').style.display = 'block';
+                } else {
+                    document.getElementById('notification').style.display = 'none';
+                }
+            } catch (err) {
+                console.error("Error fetching tips:", err);
+            }
+        }
+
+        // Check immediately and then every 60 seconds
+        checkNewTips();
+        setInterval(checkNewTips, 60000);
+    </script>
 
 </body>
 </html>
