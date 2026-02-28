@@ -8,118 +8,95 @@ import os
 app = Flask(__name__)
 
 # -------------------------------
-# DAILY TIPS (FALLBACK DATA)
+# STORAGE FOR DAILY TIPS
 # -------------------------------
-# Used ONLY if API fails
-
-free_tips_list = [
-    ["Arsenal vs Chelsea", "Barcelona vs Sevilla", "Bayern vs Dortmund"],
-    ["Man U vs Liverpool", "Real Madrid vs Valencia", "PSG vs Lyon"],
-    ["Juventus vs Inter", "Atletico vs Sevilla", "Dortmund vs Bayern"]
-]
-
-vip_tips_list = [
-    ["Real Madrid vs Atletico", "Liverpool vs Man City"],
-    ["Barcelona vs Sociedad", "Chelsea vs Tottenham"],
-    ["Bayern vs Dortmund", "Juventus vs Napoli"]
-]
-
 today_free_tips = []
 today_vip_tips = []
 vip_results_today = []
 
 # -------------------------------
-# TELEGRAM SETTINGS
+# ENV VARIABLES
 # -------------------------------
+API_KEY = os.getenv("YOUR_API_KEY")  # your live match API key
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID")
 
+# -------------------------------
+# HELPER FUNCTIONS
+# -------------------------------
+def fetch_today_matches():
+    """Fetch today's matches from API"""
+    if not API_KEY:
+        print("API_KEY not set, using fallback tips")
+        return [
+            "Arsenal vs Chelsea 2:1",
+            "Barcelona vs Sevilla 1:0",
+            "Bayern vs Dortmund 3:2"
+        ], [
+            "Real Madrid vs Atletico 2:1",
+            "Liverpool vs Man City 1:1"
+        ]
+    try:
+        url = f"https://api.example.com/matches/today?api_key={API_KEY}"
+        res = requests.get(url, timeout=10)
+        res.raise_for_status()
+        data = res.json()
+        free_tips = []
+        vip_tips = []
+        for match in data.get("matches", []):
+            free_tips.append(f"{match['home']} vs {match['away']} {match['free_score']}")
+            vip_tips.append(f"{match['home']} vs {match['away']} {match['vip_score']}")
+        return free_tips, vip_tips
+    except Exception as e:
+        print("Error fetching matches:", e)
+        # fallback hardcoded tips
+        return [
+            "Arsenal vs Chelsea 2:1",
+            "Barcelona vs Sevilla 1:0",
+            "Bayern vs Dortmund 3:2"
+        ], [
+            "Real Madrid vs Atletico 2:1",
+            "Liverpool vs Man City 1:1"
+        ]
+
 def send_telegram_message(text):
+    """Send message to Telegram"""
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
         return
-
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {"chat_id": TELEGRAM_CHANNEL_ID, "text": text}
-
     try:
         requests.post(url, json=payload, timeout=10)
-    except:
-        pass
-
-# -------------------------------
-# FETCH REAL MATCHES FROM INTERNET
-# -------------------------------
-def fetch_today_matches(limit=5):
-    api_key = os.getenv("FOOTBALL_API_KEY")
-
-    if not api_key:
-        print("FOOTBALL_API_KEY not set – using fallback")
-        return []
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    url = f"https://v3.football.api-sports.io/fixtures?date={today}"
-    headers = {"x-apisports-key": api_key}
-
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        data = response.json()
+        print("Telegram message sent!")
     except Exception as e:
-        print("API error:", e)
-        return []
-
-    matches = []
-    for game in data.get("response", [])[:limit]:
-        home = game["teams"]["home"]["name"]
-        away = game["teams"]["away"]["name"]
-        matches.append(f"{home} vs {away}")
-
-    return matches
+        print("Telegram error:", e)
 
 # -------------------------------
-# FUNCTION TO UPDATE TIPS DAILY
+# FUNCTION TO UPDATE DAILY TIPS
 # -------------------------------
 def update_daily_tips():
     global today_free_tips, today_vip_tips, vip_results_today
-
     while True:
         now = datetime.now()
+        if now.hour == 9 and now.minute == 0:  # run at 9 AM
+            today_free_tips, today_vip_tips = fetch_today_matches()
+            vip_results_today = [tip + " ✅" for tip in today_vip_tips]
 
-        if now.hour == 9 and now.minute == 0:
-            print("Updating daily tips...")
+            print("Daily tips updated!")
 
-            free_matches = fetch_today_matches(5)
-            vip_matches = fetch_today_matches(3)
+            # Optional: post to Telegram
+            send_telegram_message("📌 Free Tips Today:\n" + "\n".join(today_free_tips))
+            send_telegram_message("🔒 VIP Tips Today\nSubscribe in the app to unlock")
+            send_telegram_message("📈 VIP Results:\n" + "\n".join(vip_results_today))
 
-            # If API fails, use fallback lists
-            if not free_matches:
-                index = now.day % len(free_tips_list)
-                free_matches = free_tips_list[index]
-
-            if not vip_matches:
-                index = now.day % len(vip_tips_list)
-                vip_matches = vip_tips_list[index]
-
-            today_free_tips = free_matches
-            today_vip_tips = vip_matches
-            vip_results_today = [m + " ✅" for m in today_vip_tips]
-
-            # Telegram (optional)
-            send_telegram_message(
-                "📌 Free Tips Today:\n" + "\n".join(today_free_tips)
-            )
-            send_telegram_message(
-                "🔒 VIP Tips Today\nSubscribe in the app to unlock"
-            )
-
-            time.sleep(60)
-
+            time.sleep(60)  # avoid multiple triggers within same minute
         time.sleep(20)
 
-# Start background scheduler
+# Start scheduler in a background thread
 threading.Thread(target=update_daily_tips, daemon=True).start()
 
 # -------------------------------
-# ROUTES (WEB)
+# ROUTES (WEB PAGES)
 # -------------------------------
 @app.route("/")
 def home():
@@ -138,39 +115,20 @@ def vip_results():
     return render_template("vip_results.html", results=vip_results_today)
 
 # -------------------------------
-# API ROUTES (FOR TELEGRAM BOT)
+# API ROUTES (OPTIONAL)
 # -------------------------------
 @app.route("/api/today_tips")
 def api_today_tips():
-    return jsonify({
-        "free": today_free_tips,
-        "vip": today_vip_tips
-    })
+    return {"free": today_free_tips, "vip": today_vip_tips}
 
 @app.route("/api/vip_results")
 def api_vip_results():
-    return jsonify({
-        "results": vip_results_today
-    })
+    return {"results": vip_results_today}
 
 # -------------------------------
 # START SERVER
 # -------------------------------
 if __name__ == "__main__":
-    # Initial load on startup
-    free = fetch_today_matches(5)
-    vip = fetch_today_matches(3)
-
-    if not free:
-        index = datetime.now().day % len(free_tips_list)
-        free = free_tips_list[index]
-
-    if not vip:
-        index = datetime.now().day % len(vip_tips_list)
-        vip = vip_tips_list[index]
-
-    today_free_tips = free
-    today_vip_tips = vip
-    vip_results_today = [m + " ✅" for m in vip]
-
+    today_free_tips, today_vip_tips = fetch_today_matches()
+    vip_results_today = [tip + " ✅" for tip in today_vip_tips]
     app.run()
