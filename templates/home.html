@@ -6,67 +6,81 @@
     <title>Daily Correct Score</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
-        h1 { color: #333; }
-        .card { 
-            background: #fff; 
-            padding: 20px; 
-            margin: 15px 0; 
-            border-radius: 10px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        .card {
+            width: 250px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
             cursor: pointer;
             transition: 0.3s;
         }
-        .card:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
-        .notification { 
-            padding: 10px; 
-            background-color: #ffeb3b; 
-            border-radius: 5px; 
-            margin-bottom: 20px; 
+        .card:hover {
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            transform: translateY(-3px);
+        }
+        /* Telegram Section */
+        .telegram-section {
+            margin-top: 50px;
+            text-align: center;
+        }
+        .telegram-button {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #0088cc;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
             font-weight: bold;
+            transition: 0.3s;
+        }
+        .telegram-button:hover {
+            background-color: #006699;
         }
     </style>
 </head>
 <body>
 
     <h1>Daily Correct Score</h1>
-    <div id="notification" class="notification" style="display:none;">
-        🎯 New Tips Today!
+
+    <div class="card-container">
+        <div class="card" onclick="location.href='/free'">
+            Free Tips
+        </div>
+        <div class="card" onclick="location.href='/subscribe'">
+            VIP Tips
+        </div>
+        <div class="card" onclick="location.href='/vip_results'">
+            VIP Results ✅
+        </div>
     </div>
 
-    <div class="card" onclick="location.href='/free'">
-        Free Tips
+    <!-- Telegram Section -->
+    <div class="telegram-section">
+        <h2>Join Our Telegram Channel</h2>
+        <a href="https://t.me/daily_correct_score2" target="_blank" class="telegram-button">
+            Open Telegram
+        </a>
     </div>
-
-    <div class="card" onclick="location.href='/subscribe'">
-        VIP Tips
-    </div>
-
-    <div class="card" onclick="location.href='/vip_results'">
-        VIP Results ✅
-    </div>
-
-    <script>
-        // Function to check for new tips every 60 seconds
-        async function checkNewTips() {
-            try {
-                const response = await fetch('/api/today_tips');
-                const data = await response.json();
-
-                if (data.free.length > 0 || data.vip.length > 0) {
-                    document.getElementById('notification').style.display = 'block';
-                } else {
-                    document.getElementById('notification').style.display = 'none';
-                }
-            } catch (err) {
-                console.error("Error fetching tips:", err);
-            }
-        }
-
-        // Check immediately and then every 60 seconds
-        checkNewTips();
-        setInterval(checkNewTips, 60000);
-    </script>
 
 </body>
 </html>
