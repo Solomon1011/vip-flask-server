@@ -1,5 +1,5 @@
 
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from datetime import datetime
 import threading
 import time
@@ -67,7 +67,7 @@ def update_daily_tips():
 
             print("Daily tips updated")
 
-            # Telegram posting
+            # Telegram posting (optional – you already have GitHub Actions)
             send_telegram_message(
                 "📌 Free Tips Today:\n" + "\n".join(today_free_tips)
             )
@@ -83,7 +83,7 @@ def update_daily_tips():
 threading.Thread(target=update_daily_tips, daemon=True).start()
 
 # -------------------------------
-# ROUTES
+# ROUTES (WEB PAGES)
 # -------------------------------
 @app.route("/")
 def home():
@@ -100,6 +100,22 @@ def subscribe():
 @app.route("/vip_results")
 def vip_results():
     return render_template("vip_results.html", results=vip_results_today)
+
+# -------------------------------
+# API ROUTES (FOR TELEGRAM BOT)
+# -------------------------------
+@app.route("/api/today_tips")
+def api_today_tips():
+    return jsonify({
+        "free": today_free_tips,
+        "vip": today_vip_tips
+    })
+
+@app.route("/api/vip_results")
+def api_vip_results():
+    return jsonify({
+        "results": vip_results_today
+    })
 
 # -------------------------------
 # START SERVER
