@@ -1,30 +1,26 @@
-name: Auto Post Tips
+name: Telegram Daily Auto Post
 
 on:
   schedule:
-    - cron: "0 8 * * *"   # 9am Nigeria time
+    - cron: "0 8 * * *"   # posts every day 8am UTC
   workflow_dispatch:
 
 jobs:
   post:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Run update script
-        run: python update_tips.py
+      - name: Install dependencies
+        run: pip install requests
 
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add tips.json
-          git commit -m "Auto update tips"
-          git push
+      - name: Run auto post
+        run: python daily_post.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
