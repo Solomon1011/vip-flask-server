@@ -2,8 +2,8 @@ name: Telegram Daily Auto Post
 
 on:
   schedule:
-    - cron: "0 9 * * *"  # Runs every day at 9 AM UTC
-  workflow_dispatch:     # Allows manual run
+    - cron: "0 9 * * *"   # Every day at 9 AM UTC
+  workflow_dispatch:       # Manual run
 
 jobs:
   post:
@@ -19,10 +19,11 @@ jobs:
           python-version: "3.10"
 
       - name: Install dependencies
-        run: pip install python-telegram-bot==13.15
+        run: pip install python-telegram-bot==13.15 requests
 
-      - name: Run daily post script
+      - name: Run daily Telegram post
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          APP_URL: ${{ secrets.APP_URL }}
         run: python main.py
