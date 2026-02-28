@@ -1,9 +1,8 @@
 name: Telegram Daily Auto Post
 
-# Run daily at 9 AM UTC and also manually
 on:
   schedule:
-    - cron: "0 9 * * *"  # 9 AM UTC every day
+    - cron: "0 9 * * *"  # every day at 9 AM UTC
   workflow_dispatch:
 
 jobs:
@@ -26,5 +25,5 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
-          YOUR_API_KEY: ${{ secrets.YOUR_API_KEY }}  # your live match API key
+          YOUR_API_KEY: ${{ secrets.YOUR_API_KEY }}
         run: python daily_post.py
