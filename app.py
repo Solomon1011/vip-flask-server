@@ -17,41 +17,32 @@ vip_results_today = []
 # -------------------------------
 # ENV VARIABLES
 # -------------------------------
-API_KEY = os.getenv("API_FOOTBALL_KEY")
+SPORTMONKS_API_KEY = os.getenv("SPORTMONKS_API_KEY")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHANNEL_ID = os.getenv("TELEGRAM_CHANNEL_ID")
 
-API_URL = "https://v3.football.api-sports.io/fixtures"
+BASE_URL = "https://api.sportmonks.com/v3/football/fixtures/date"
 
 # -------------------------------
-# FETCH TODAY MATCHES (UTC SAFE)
+# FETCH TODAY MATCHES
 # -------------------------------
 def fetch_today_matches():
     global today_free_tips, today_vip_tips, vip_results_today
 
     try:
         today = datetime.utcnow().strftime("%Y-%m-%d")
+        url = f"{BASE_URL}/{today}?api_token={SPORTMONKS_API_KEY}"
 
-        headers = {
-            "x-apisports-key": API_KEY
-        }
-
-        response = requests.get(
-            f"{API_URL}?date={today}",
-            headers=headers,
-            timeout=15
-        )
-
+        response = requests.get(url, timeout=15)
         data = response.json()
+
         free = []
         vip = []
 
-        for fixture in data.get("response", []):
-            teams = fixture["teams"]
-            home = teams["home"]["name"]
-            away = teams["away"]["name"]
+        for fixture in data.get("data", []):
+            home = fixture["home_team"]["data"]["name"]
+            away = fixture["away_team"]["data"]["name"]
 
-            # simple placeholder prediction
             free.append(f"{home} vs {away} 1:0")
             vip.append(f"{home} vs {away} 2:1")
 
@@ -61,36 +52,28 @@ def fetch_today_matches():
 
         print("✅ Matches updated:", today)
 
-        send_telegram_message("📌 Free Tips Today:\n" + "\n".join(today_free_tips[:5]))
-        send_telegram_message("🔒 VIP Tips available in app")
-
     except Exception as e:
         print("❌ API error:", e)
 
 # -------------------------------
-# TELEGRAM
+# TELEGRAM FUNCTION
 # -------------------------------
 def send_telegram_message(text):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHANNEL_ID:
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": TELEGRAM_CHANNEL_ID,
-        "text": text
-    }
-
+    payload = {"chat_id": TELEGRAM_CHANNEL_ID, "text": text}
     try:
         requests.post(url, json=payload, timeout=10)
     except:
         pass
 
 # -------------------------------
-# DAILY AUTO UPDATE (SAFE LOOP)
+# DAILY UPDATE LOOP
 # -------------------------------
 def scheduler():
     last_run = None
-
     while True:
         now = datetime.utcnow()
         today = now.strftime("%Y-%m-%d")
@@ -123,7 +106,7 @@ def vip_results():
     return render_template("vip_results.html", results=vip_results_today)
 
 # -------------------------------
-# API
+# API ENDPOINTS
 # -------------------------------
 @app.route("/api/today_tips")
 def api_today_tips():
@@ -132,8 +115,14 @@ def api_today_tips():
         "vip": today_vip_tips
     })
 
+@app.route("/api/vip_results")
+def api_vip_results():
+    return jsonify({
+        "results": vip_results_today
+    })
+
 # -------------------------------
-# START
+# START SERVER
 # -------------------------------
 if __name__ == "__main__":
     fetch_today_matches()
